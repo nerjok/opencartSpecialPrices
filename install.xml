@@ -1,0 +1,59 @@
+<modification>
+	<name>Special price csv file import 3.x</name>
+	<code>Special price Tool (V3.16) for OpenCart 3.x</code>
+	<version>3.x-3.16</version>
+	<author>e-tools.lt</author>
+	<link>e-tools.lt</link>
+	<file path="admin/controller/customer/customer.php">
+		<operation>
+			<search><![CDATA[
+			$this->response->setOutput($this->load->view('customer/customer_form', $data));
+			]]></search>
+			<add position="before"><![CDATA[
+					/* added  extension */
+			$data['csvPrice'] = false;
+			
+			if ($this->config->get('module_csvPrice_status') != null):
+			
+				 $status = $this->config->get('module_csvPrice_status');
+				 
+				 if (intval($status) == 1){
+
+					$data['csvPrice'] = $this->load->controller('extension/module/csvPrice/show', $data);
+
+				 }
+				
+				endif;
+			]]></add>
+		</operation>
+	</file>
+	<file path="admin/view/template/customer/customer_form.twig">
+		<operation>
+			<search><![CDATA[<li><a href="#tab-ip" data-toggle="tab">{{ tab_ip }}</a></li>]]></search>
+			<add position="after"><![CDATA[
+				{% if csvPrice %}
+                <li><a href="#csv" data-toggle="tab"> Import</a></li>
+                {% endif %}
+			]]></add>
+		</operation>
+	</file>
+		<file path="admin/view/template/customer/customer_form.twig">
+		<operation>
+			<search><![CDATA[
+			            <div class="tab-pane" id="tab-ip">
+						  <fieldset>
+							<legend>{{ text_ip }}</legend>
+							<div id="ip"></div>
+						  </fieldset>
+						</div>
+				]]></search>
+			<add position="after"><![CDATA[
+			<div class="tab-pane" id="csv">
+				  <fieldset>
+					{{ csvPrice }}
+				  </fieldset>
+				</div>
+			]]></add>
+		</operation>
+	</file>
+</modification>

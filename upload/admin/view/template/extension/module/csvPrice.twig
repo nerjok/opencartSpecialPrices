@@ -1,0 +1,366 @@
+    <style>
+
+     .tdinput
+{
+   
+
+        -moz-appearance: textfield;
+    -webkit-appearance: textfield;
+    background-color: white;
+    background-color: -moz-field;
+    border: 1px solid darkgray;
+    box-shadow: 1px 1px 1px 0 lightgray inset;  
+    font: -moz-field;
+    font: -webkit-small-control;
+    margin-top: 5px;
+    padding: 2px 3px;
+    width: 200px;  
+    min-height:20px;
+    float:right;
+}
+.word-wrap{word-wrap: break-word;}
+
+body {word-wrap: break-word;}
+
+p{word-wrap: break-word;}
+    </style>
+
+
+            <div class="tab-pane" id="csv-add">
+             <legend>{{ heading}}({{firstname }} {{ lastname}})</legend>
+
+
+
+    <div id="impress"></div>
+      <button type="button" id="button-upload" data-loading-text="Loading..." class="btn btn-primary"><i class="fa fa-upload"></i> Select (.csv) File</button>
+
+              <div id="cvUp">
+              <div class="table-responsive">
+             {% if time %}
+              {{ latest}}:<b> {{time}} {{ editor['username'] }} </b>
+              {% endif %}
+  <table class="table table-bordered table-hover">
+  <caption>Edit on click</caption>
+    <thead>
+      <tr>
+        <td class="text-right">{{pname}}</td>
+        <td class="text-right">{{ ean }}</td>
+        <td class="text-right">{{ sprice }}</td>
+        <td class="text-right">{{ date}}</td>
+        <td class="text-right">{{ action}}</td>
+      </tr>
+    </thead>
+    <tbody>
+    
+    {% if pricelist != null %}
+    {% for row in pricelist %}
+    
+      <tr id="{{ row['id']}}">
+        <td class="text-right"><a href="/index.php?route=product/product&product_id={{ row['link']}}">{{ row['Name']}}</a></td>
+        <td class="text-right"><div id="myP" row="{{ row['id']}}" clmn="ean_code" >{{ row['ean_code']}}</div></td>
+        <td class="text-right"><div id="myP" row="{{ row['id']}}" clmn="sp_price" >{{ row['sp_price']}}</div></td>
+        <td class="text-right">{{ row['date_added']}}</td>
+        <td class="text-right">
+        <a href="{{ row['id']}}" id="{{ row['id']}}" data-toggle="tooltip" title="" class="btn btn-info" data-original-title="Edit" ><i class="fa fa-pencil"></i></a>
+        <a href="{{ row['id']}}"  id="delete" class="btn btn-warning" data-original-title="Delete"><i id="delete" class="fa fa-trash-o"></i></a>
+        </td>
+      </tr>
+   
+    {% endfor %}
+    {% endif %}
+    
+
+    
+      <tr>
+        <td></td>
+        <td class="text-right" colspan="5"><b></b></td>
+      
+        </td>
+      </tr>
+     
+
+     
+    </tbody>
+  </table>
+</div>
+       <!-- csv exctension end -->  
+
+<script type="text/javascript"><!--
+$(document).ready(function(){
+
+/**
+ *Delete entry
+ */
+
+$('.panel-body').on('click', '.btn-danger, .btn-warning', function(e) {
+	e.preventDefault();
+	
+	if (confirm('Sure you wish to delete?')) {
+		var node = this;
+	row =$(this).attr('href');
+		$.ajax({
+      type: "POST",
+			url: 'index.php?route=extension/module/csvPrice/delete&user_token={{ user_token }}&customer_id={{ customer_id }}',
+		//	dataType: 'html',
+			beforeSend: function() {
+				$(node).button('loading');
+			},
+      data: {'id': row},
+			complete: function() {
+			//	$(node).button('reset');
+        $("tr[id="+row+"]").remove();
+			},
+			success: function(html) {
+        
+        $('#impress').html("<div id='message' class=\"alert alert-success\">Entry has been successfuly deleted</div>");
+       
+			},
+			error: function(xhr, ajaxOptions, thrownError) {
+			          $('#impress').html("<div id='message' class=\"alert alert-danger\">Error occurred</div>");
+
+			}
+      
+		});
+	}
+});
+
+
+
+/**
+ *
+ * Edit info
+ */
+$('.panel-body').on('click', '.btn-info ', function(e) {
+        e.preventDefault();
+        
+        row = $(this).attr('id');
+      
+          entry = $("tr[id="+row+"]");
+
+              ean = entry.find("div[clmn=ean_code]");
+
+          ean.attr('class','tdinput');
+          ean.attr('contenteditable','true');
+
+              price = entry.find("div[clmn=sp_price]");
+
+          price.attr('class','tdinput');
+          price.attr('contenteditable','true');
+
+          $(this).children().attr('class', 'fa fa-save');
+          $(this).attr('class', 'btn btn-success');
+});
+
+/**
+ *
+ * save info
+ */
+$('.panel-body').on('click', '.btn-success', function(e) {
+        e.preventDefault();
+                  $(this).children().attr('class', 'fa fa-pencil');
+
+        var node = this;
+        row = $(this).attr('id');
+
+     
+          entry = $("tr[id="+row+"]");
+
+              ean = entry.find("div[clmn=ean_code]");
+
+          ean.attr('class','');
+          ean.attr('contenteditable','false');
+
+              price = entry.find("div[clmn=sp_price]");
+
+          price.attr('class','');
+          price.attr('contenteditable','false');
+
+       
+
+                          $.ajax({
+                type: "POST",
+                url:"index.php?route=extension/module/csvPrice/updateAll&user_token={{ user_token }}&customer_id={{ customer_id }}>",
+                		/*	beforeSend: function() {
+                      $(node).button('loading');
+                    },*/
+                data:  {'id': row, 
+                        'ean': ean.text(),
+                        'price': price.text()},
+             success: function(data) {
+               $('#impress').html("<div id='message' class=\"alert alert-info\">"+data+"</div>");
+               // alert("succsess updated data"+data) 
+               },
+
+             error: function(){
+                    $('#impress').html("<div id='message' class=\"alert alert-danger\">Invalid Data</div>");
+                },
+                	complete: function() {
+				
+               // $(node).button('reset'); 
+          $(node).attr('class', 'btn btn-info');
+          
+                  }
+                });
+         // $(node).children().attr('class', 'fa fa-pencil');
+
+});
+
+
+
+/**
+ * Add file to further parser
+ *
+ */
+
+
+
+//saving
+var step = new Array();
+var total = 0;
+var ext;
+
+//$('#button-upload').on('click', function() {
+
+  $('.panel-body').on('click','#button-upload' ,function() {
+	$('#form-upload').remove();
+
+	$('body').prepend('<form enctype="multipart/form-data" id="form-upload" style="display: none;"><input type="file" name="file" id="filas"/></form>');
+
+	$('#form-upload input[name=\'file\']').trigger('click');
+
+	if (typeof timer != 'undefined') {
+    	clearInterval(timer);
+	}
+
+            timer = setInterval(function() {
+              
+          extt = $('#form-upload input[name=\'file\']').val();//.split('.').pop().toLowerCase();
+          if(extt != null) ext = extt.split('.').pop().toLowerCase();
+         
+                  if(ext != 'csv' && ext != '') {
+                  $('#impress').html("<div id='message' class=\"alert alert-danger\">Invalid file: "+ext+"</div>");
+                  $('#filas').replaceWith('');
+                  ext ='';
+                  }
+                
+                
+
+              if ($('#form-upload input[name=\'file\']').val() != '' && ext == 'csv') {
+                clearInterval(timer);
+
+            image = new FormData($('#form-upload')[0]);
+
+         
+                $.ajax({
+                  url: 'index.php?route=extension/module/csvPrice/addcsv&user_token={{ user_token }}&customer_id={{ customer_id }}',
+                  type: 'post',
+                  dataType: 'json',
+                  cache: false,
+                  //async: false,
+                  contentType: false,
+                  processData: false,
+                    data: image, 
+
+                  success: function(result, textStatus, jqXHR) {
+                    $('#impress').html("<div id='message' class=\"alert alert-info\">"+result+"</div>");
+                    setTimeout(function(){
+                      url = location.href;
+                       sent = url.slice(-4);
+                      
+                       if (sent != '#imp') {
+                          window.location.href = window.location.href + '#imp';
+                       } else {
+                         window.location.href = url;
+                         }
+                         
+                          location.reload();
+                      }, 2000); 
+                    
+                      
+                    
+                    },
+                  error: function(xhr, ajaxOptions, thrownError) {
+                                         $('#impress').html("<div id='message' class=\"alert alert-danger\">Invalid Data</div>");
+
+                  }
+                  
+                });
+
+     
+              }
+            }, 500);
+          });
+
+/**
+ * @descr editing info by one input
+ *
+ */
+
+
+            $("td:has(div)").click(function() {
+            
+
+                $(this).children().attr('contenteditable','true');
+
+                                    $(this).children().attr('class','tdinput');
+
+                });
+
+                               $("td:has(div)").dblclick(function(){
+
+     $(this).children().attr('contenteditable','false');
+
+                            $(this).children().attr('class','');
+                    });
+
+           /**
+            * @param enter press event
+            *
+            * @return submiting enroled data
+            */
+                $("td>div").keypress(function(e)
+                {
+                  	
+                    if (e.keyCode == 13) {
+                      e.preventDefault();
+                        value = $(this).text();
+                        row =$(this).attr('row');
+                        collumn = $(this).attr('clmn');
+            // alert( "button pushed" + value + row + collumn);
+                
+                 $(this).attr('contenteditable','false');
+
+                                $(this).attr('class','');
+
+                $.ajax({
+                type: "POST",
+                url:"index.php?route=extension/module/csvPrice/update&user_token={{ user_token }}&customer_id={{ customer_id }}",
+                data:  {'id': row, 
+                        'collumn': collumn,
+                        'value': value},
+             success: function(data) {
+               $('#impress').html("<div id='message' class=\"alert alert-info\">"+data+"</div>");
+               // alert("Succsess Data updated"+data) 
+               },
+
+             error: function(msg){
+                    $('#impress').html("<div id='message' class=\"alert alert-danger\">Invalid Data</div>");
+                }
+                });
+                    }
+        
+        });
+});
+
+
+  url = location.href;
+sent = url.slice(-3);
+
+if (sent != 'undefined') { 
+   if (sent == 'imp') { // sent is equal to yes
+ 
+     $('[href="#csv"]').trigger('click');
+
+   }
+}
+</script>
